@@ -1,30 +1,56 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+
+import SplashScreen from "./screens/SplashScreen";
+import OnboardingScreen1 from "./screens/OnboardingScreen1";
+import OnboardingScreen2 from "./screens/OnboardingScreen2";
+import OnboardingScreen3 from "./screens/OnboardingScreen3";
+import Home from "./screens/Home";
+import ReportForm from "./screens/ReportForm";
+import Contact from "./screens/Contact";
+
+
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Image source={require("./assets/yckf-logo.png")} style={styles.logo} />
-      <Text style={styles.title}>Welcome to YCKF APP</Text>
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Splash"
+      screenOptions={{ headerShown: false }}>
+        <Stack.Screen
+          name="Splash"
+          component={SplashScreen}
+        />
+        <Stack.Screen
+          name="Onboarding1"
+          component={OnboardingScreen1}
+
+        />
+        <Stack.Screen
+          name="Onboarding2"
+          component={OnboardingScreen2}
+        />
+        <Stack.Screen
+          name="Onboarding3"
+          component={OnboardingScreen3}
+        />
+        <Stack.Screen
+          name="Home"
+          component={Home}
+        />
+         <Stack.Screen
+          name="Report"
+          component={ReportForm}
+        />
+         <Stack.Screen
+          name="Contact"
+          component={Contact}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#3A86FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
-    resizeMode: "contain",
-  },
-  title: {
-    fontSize: 24,
-    color: "#fff",
-    fontWeight: "bold",
-  },
-});
+
+
