@@ -12,7 +12,7 @@ export default function OnboardingScreen3({ navigation }: any) {
       buttonText="Get Started"
       showBack={true}
       onBack={() => navigation.goBack()}
-      onNext={() => navigation.replace("Home")}
+      onNext={() => navigation.replace("Tabs")}
     />
   );
 }

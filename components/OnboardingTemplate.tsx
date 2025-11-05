@@ -2,10 +2,11 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";            
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, StatusBar } from "react-native";
 import Svg, { Path} from "react-native-svg";
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get("window");
 const BLUE_HEIGHT = height * 0.7;
-const CURVE_DEPTH = 90;
+const CURVE_DEPTH = 60;
 
 type Props = {
     title: string;
@@ -24,11 +25,12 @@ export default function OnboardingTemplate({
   onBack, 
   onNext, 
 }: any ) {
+
+  
  const path = `  
  M 0 ${CURVE_DEPTH} 
- L ${width * 0.72} ${CURVE_DEPTH + 140}
- Q ${width * 0.9} ${CURVE_DEPTH + 180} ${width * 0.99} ${CURVE_DEPTH - 0}
- Q ${width * 9} ${CURVE_DEPTH - 0} ${width} ${CURVE_DEPTH - 0}
+ L ${width * 0.89} ${CURVE_DEPTH + 120}
+ Q ${width * 0.98 } ${CURVE_DEPTH + 120} ${width} ${CURVE_DEPTH + 1}
  L ${width} ${BLUE_HEIGHT}
  L 0 ${BLUE_HEIGHT}
  Z `
@@ -38,8 +40,10 @@ export default function OnboardingTemplate({
       <View style={styles.container}>
       {showBack ? (
         <TouchableOpacity style={styles.leftIcon} onPress={onBack} activeOpacity={0.7}>
-            <View style={styles.leftCircle}>
-                <Text style={styles.leftChevron}>{'<'}</Text>
+            <View style={styles.backCircle}>
+                <Text style={styles.backChevron}>
+                   <Icon name="chevron-left" size={25} color="#fff" />
+                </Text>
             </View>
         </TouchableOpacity>
         ) : null} 
@@ -51,7 +55,7 @@ export default function OnboardingTemplate({
           <Svg
             width={width}
             height={BLUE_HEIGHT}
-            viewBox={`0 0 ${width} ${BLUE_HEIGHT}`}
+            viewBox={`0 0  ${width} ${BLUE_HEIGHT}`}
           >
             <Path d={path} fill="#092F4F" />
           </Svg>
@@ -85,18 +89,18 @@ const styles = StyleSheet.create({
         left: 18,
         zIndex: 20,
       },
-      leftCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: "#092F4F",
-        justifyContent: "center",
-        alignItems: "center",
-        },
-      leftChevron: {
-        color: "#fff",
-        fontSize: 20,
-        fontWeight: "700",      
+      backCircle: {
+        width: 34,
+        height: 34,
+        borderRadius: 40,
+        backgroundColor: '#092F4F',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+      },
+      backChevron: {
+      color: '#fff',
+      fontSize: 20,
       },
       skipTouch: {
         position: "absolute",
@@ -117,30 +121,30 @@ const styles = StyleSheet.create({
       },
       blueContentWrapper: {
         position: "absolute",
-        bottom: 180,
+        bottom: 42,
         width,
         alignItems: "center",
         paddingHorizontal: 28,
       },
       title: {
         color: "#FFFFFF",
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: "700",
         textAlign: "center",
-        marginBottom: 12,
+        marginBottom: 20,
       },
 
       subtitle: {
         color: "#FFFFFF",
         fontSize: 16,
         textAlign: "center",
-        marginBottom: 24,
+        marginBottom: 150,
       },
       nextButton: {
         backgroundColor: "#FFFFFF",
-        paddingVertical: 12,
+        paddingVertical: 10,
         paddingHorizontal: 125,
-        borderRadius: 28,
+        borderRadius: 36,
         elevation: 3,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
@@ -149,7 +153,7 @@ const styles = StyleSheet.create({
       },
       nextButtonText: {
         color: "#092F4F",
-        fontSize: 16,
+        fontSize: 12,
         fontWeight: "600",  
       },
       

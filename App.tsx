@@ -6,7 +6,7 @@ import SplashScreen from "./screens/SplashScreen";
 import OnboardingScreen1 from "./screens/OnboardingScreen1";
 import OnboardingScreen2 from "./screens/OnboardingScreen2";
 import OnboardingScreen3 from "./screens/OnboardingScreen3";
-import Home from "./screens/Home";
+import Tabs from "./Tabs";
 import ReportForm from "./screens/ReportForm";
 import Contact from "./screens/Contact";
 
@@ -37,8 +37,8 @@ export default function App() {
           component={OnboardingScreen3}
         />
         <Stack.Screen
-          name="Home"
-          component={Home}
+          name="Tabs"
+          component={Tabs}
         />
          <Stack.Screen
           name="Report"
