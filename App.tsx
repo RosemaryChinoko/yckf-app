@@ -9,6 +9,8 @@ import OnboardingScreen3 from "./screens/OnboardingScreen3";
 import Tabs from "./Tabs";
 import ReportForm from "./screens/ReportForm";
 import Contact from "./screens/Contact";
+import SafeBoxDetail from "./screens/safeBoxDetail";
+import SafeBox from "./screens/SafeBox";
 
 
 
@@ -40,6 +42,11 @@ export default function App() {
           name="Tabs"
           component={Tabs}
         />
+        <Stack.Screen
+          name="SafeBox"
+          component={SafeBox}
+        />
+         
          <Stack.Screen
           name="Report"
           component={ReportForm}
@@ -47,6 +54,14 @@ export default function App() {
          <Stack.Screen
           name="Contact"
           component={Contact}
+        />
+        <Stack.Screen
+          name="SafeBoxDetail"
+          component={SafeBox}
+        />
+        <Stack.Screen
+          name="EditDraft"
+          component={ReportForm}
         />
       </Stack.Navigator>
     </NavigationContainer>

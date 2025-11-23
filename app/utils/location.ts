@@ -4,41 +4,48 @@ import {Alert, Platform, Share } from 'react-native';
 
 /* Request foreground location permission if needed, and return boolean*/
 export async function ensureLocationPermission(): Promise<boolean> {
-    try {
-        const perm = await Location.getForegroundPermissionsAsync();
-        if (perm.status === 'granted') return true; 
-        const req = await Location.requestForegroundPermissionsAsync();
-        return req.status === 'granted';
-     }  catch (err) { 
-        console.warn('ensureLocationPermissionerror', err);
-        return false;
-        }
+  try {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+
+    if (status === "granted") {
+      return true;
+    }
+
+    Alert.alert(
+      "Permission required",
+      "Location permission is required to capture your coordinates."
+    );
+
+    return false;
+  } catch (err) {
+    console.warn("ensureLocationPermission error", err);
+    return false;
+  }
 }
 
+
+
 /* Get a single current position. Returns null or failure. */
-export async function getCurrentPosition(): Promise<{
-    latitude: number;
-    longitude: number;
-} | null> {
-    try{
-        const ok = await ensureLocationPermission();
-        if (!ok) return null;
+export async function getCurrentPosition(){
+  try {
+    const ok = await ensureLocationPermission();
+    if (!ok) return null;
 
-        const pos = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Highest,
-            timeout: 10000,                      // Maximum time (ms) allowed for the request
-            maximumAge: 10000,                  // Maximum acceptable age (ms) of a cached position
-        });
+    const pos = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Highest,
+      mayShowUserSettingsDialog: true,
+    });
 
-        return {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-        };
-    } catch (err) {
-        console.warn('getCurrentPosition error', err);
-        return null;
-        }
-    }
+    return {
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude,
+    };
+  } catch (err) {
+    console.warn("getCurrentPosition error", err);
+    return null;
+  }
+}
+
 
     /* Compose a whatsapp share message that includes coordinates + maps link. Attempts to open WhatsApp; if not available, falls back to share sheet. */
 

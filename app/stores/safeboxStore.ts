@@ -4,16 +4,23 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 /**
  * Types
  */
-export type EvidenceFile = { uri: string; name?: string; size?: number };
-export type DraftReport = {
+export type EvidenceFile = { uri: string; name?: string; size: number }; // size is now required
+// types.ts or interfaces.ts
+
+export interface DraftReport {
   id: string;
   title: string;
-  crimeType?: string;
-  dateSaved: string; // ISO string
-  details?: string;
-  files: EvidenceFile[];
-  status?: 'draft' | 'queued' | 'submitted' | 'failed';
-};
+  crimeType: string;
+  dateSaved: string;
+  details: string;
+  files: { uri: string; name: string; size: number }[];
+  status: string;
+  fullName: string;
+  phone: string;
+  email: string;
+  city: string;
+  date: string;
+}
 
 /**
  * Storage keys
@@ -44,7 +51,7 @@ export async function copyFileToAppDir(
   uri: string,
   filename?: string
 ): Promise<EvidenceFile> {
-  if (!uri) throw new Error("Missing file URI");
+    if (!uri) throw new Error("Missing file URI");
 
   const name = filename ?? uri.split("/").pop() ?? `file-${Date.now()}`;
   const dest = `${APP_DIR}${Date.now()}-${name}`;
@@ -52,18 +59,28 @@ export async function copyFileToAppDir(
   try {
     await ensureAppDir();
     await FileSystem.copyAsync({ from: uri, to: dest });
-    const info = await FileSystem.getInfoAsync(dest, { size: true });
+    const info = await FileSystem.getInfoAsync(dest, { md5: false }); 
+
+    if (!info.exists) {
+      console.error("❌ File does not exist after copying:", dest);
+      throw new Error("File does not exist after copying");
+    }
+
     console.log("✅ File copied to SafeBox:", dest);
-    return { uri: dest, name, size: info.size };
+    return { uri: dest, name, size: info.size ?? 0 }; // 'size' is part of the info object returned
   } catch (err) {
     console.error("❌ Error copying file:", err);
     throw err;
   }
+
 }
+
 
 /**
  * List all locally stored evidence files
  */
+
+
 export async function listEvidenceFiles(): Promise<EvidenceFile[]> {
   try {
     await ensureAppDir();
@@ -71,8 +88,9 @@ export async function listEvidenceFiles(): Promise<EvidenceFile[]> {
     const fileDetails = await Promise.all(
       files.map(async (file) => {
         const path = `${APP_DIR}${file}`;
-        const info = await FileSystem.getInfoAsync(path, { size: true });
-        return { name: file, uri: path, size: info.size };
+        const info = await FileSystem.getInfoAsync(path); // Removed { size: true }
+        // Check if the file exists before accessing the size property
+        return { name: file, uri: path, size: info.exists ? info.size ?? 0 : 0 };
       })
     );
     return fileDetails;
@@ -81,6 +99,8 @@ export async function listEvidenceFiles(): Promise<EvidenceFile[]> {
     return [];
   }
 }
+
+
 
 /**
  * Delete a specific file from the SafeBox

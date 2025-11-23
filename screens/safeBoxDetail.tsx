@@ -107,6 +107,9 @@ export default function SafeBoxDetail({ route, navigation }: Props) {
           >
             <Text style={styles.secondaryText}>Back to List</Text>
           </TouchableOpacity>
+          
+
+          
         </View>
       </ScrollView>
     </SafeAreaView>

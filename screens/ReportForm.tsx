@@ -1,34 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons as Icon } from "@expo/vector-icons";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Platform,
-  Share,
-} from "react-native";
+import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Share} from "react-native";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import * as MailComposer from "expo-mail-composer";
 import * as Linking from "expo-linking";
-import {
-  saveDraft as storeSaveDraft,
-  DraftReport,
-  copyFileToAppDir,
-} from "../app/stores/safeboxStore";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Picker } from "@react-native-picker/picker";
+import {saveDraft as storeSaveDraft, DraftReport, copyFileToAppDir} from "../app/stores/safeboxStore";
+import { ensureLocationPermission } from "../app/utils/location";
 
-export async function submitReport() {
-  // placeholder moved out of component — implement submission logic here (e.g., send email or enqueue for backend)
-  // This function should be updated to accept needed parameters or use an injected service
-  console.warn("submitReport: not implemented");
-  console.warn("submitReport: not implemented");
-}
+
+
 
 // Request and ensure media library permission; returns true if granted
 export async function ensureMediaPermission() {
@@ -54,17 +39,27 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
   const [crimeType, setCrimeType] = useState("");
   const [details, setDetails] = useState("");
   const [date, setDate] = useState<string>(new Date().toDateString());
-  const [images, setImages] = useState<{ uri: string; name?: string }[]>([]);
-  const [files, setFiles] = useState<{ uri: string; name?: string }[]>([]);
+  const [images, setImages] = useState<{
+    size: any; uri: string; name?: string 
+}[]>([]);
+  const [files, setFiles] = useState<{
+    size: any; uri: string; name?: string 
+}[]>([]);
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
+  const REPORT_WHATSAPP = "https://wa.me/265887754979";
+  
+
+
 
   // Dev-only debug helpers
   const [debugVisible, setDebugVisible] = useState(false);
   const [lastPickerResponse, setLastPickerResponse] = useState<any>(null);
   const [lastCopyError, setLastCopyError] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
 
   const locationCaptured = location
     ? `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`
@@ -85,6 +80,45 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
       }
     })();
   }, []);
+
+  // --- Auto-save draft effect ---
+useEffect(() => {
+  const autoSave = setTimeout(() => {
+    // only saves if some data exists
+    if (!fullName && !details && images.length === 0 && files.length === 0) return;
+
+    const draftId = `draft-${Date.now()}`;
+    saveDraftToSafeBox(draftId);
+  }, 3000); // auto-save after 3 seconds of inactivity
+
+  return () => clearTimeout(autoSave);
+}, [fullName, email, phone, city, crimeType, details, date, images, files]);
+
+// --- Helper function inside the component ---
+async function saveDraftToSafeBox(id: string) {
+  try {
+    const draft: DraftReport = {
+      id,
+      title: `${crimeType || "Report"} — ${fullName || "anonymous"}`,
+      crimeType,
+      dateSaved: new Date().toISOString(),
+      details,
+      files: [...images, ...files].map(f => ({ uri: f.uri, name: f.name || "untitled", size: f.size })),
+      status: "draft",
+      email: "",
+      phone: "",
+      city: "",
+      date: "",
+      fullName: ""
+    };
+
+    await storeSaveDraft(draft);
+    console.log("Auto-saved draft", id);
+  } catch (err) {
+    console.warn("Auto-save failed", err);
+  }
+}
+
 
   // helper: ensure location is populated (if possible)
   async function ensureLocation() {
@@ -115,37 +149,31 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
   }
 
   // ---------- Helpers ----------
-  async function captureLocation() {
-    try {
-      const perm = await Location.getForegroundPermissionsAsync();
-      if (perm.status !== "granted") {
-        const req = await Location.requestForegroundPermissionsAsync();
-        if (req.status !== "granted") {
-          Alert.alert(
-            "Permission needed",
-            "Location permission is required to capture your coordinates."
-          );
-          return;
-        }
-      }
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Highest,
-      });
-      setLocation({
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-      });
-      Alert.alert(
-        "Location captured",
-        `Lat: ${pos.coords.latitude.toFixed(
-          6
-        )}, Lon: ${pos.coords.longitude.toFixed(6)}`
-      );
-    } catch (err) {
-      console.warn(err);
-      Alert.alert("Location error", "Unable to capture location.");
-    }
+async function captureLocation() {
+  const ok = await ensureLocationPermission();
+  if (!ok) return;
+
+  try {
+    const pos = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+
+    setLocation({
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude,
+    });
+
+    Alert.alert(
+      "Location captured",
+      `Lat: ${pos.coords.latitude.toFixed(6)}, Lon: ${pos.coords.longitude.toFixed(6)}`
+    );
+  } catch (err) {
+    console.warn("captureLocation error", err);
+    Alert.alert("Location error", "Unable to capture location.");
   }
+}
+
+  
   // write base64 to a temp cache file and return its uri
   async function writeBase64Temp(base64: string, suggestedName?: string) {
     const filename = suggestedName || `yckf-temp-${Date.now()}.jpg`;
@@ -169,7 +197,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
 
     try {
       const saved = await copyFileToAppDir(localUri);
-      const newEntry = { uri: saved.uri, name: saved.name };
+      const newEntry = { uri: saved.uri, name: saved.name, size: saved.size };
       setImages((p) => [...p, newEntry]);
       setFiles((p) => [...p, newEntry]);
       setLastCopyError(null);
@@ -182,7 +210,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
           : String(error_);
       setLastCopyError(errMsg);
 
-      // If we have base64 data, write it to cache and try copying again
+      
       if (base64) {
         try {
           const fallback = await writeBase64Temp(
@@ -190,7 +218,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
             asset?.fileName || undefined
           );
           const saved2 = await copyFileToAppDir(fallback);
-          const newEntry = { uri: saved2.uri, name: saved2.name };
+          const newEntry = { uri: saved2.uri, name: saved2.name, size: saved2.size };
           setImages((p) => [...p, newEntry]);
           setFiles((p) => [...p, newEntry]);
           setLastCopyError(null);
@@ -200,13 +228,9 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
           setLastCopyError(
             err2 && (err2 as any).message ? (err2 as any).message : String(err2)
           );
-          // continue to other fallbacks below
         }
       }
 
-      // If the environment supports FileSystem.downloadAsync, try downloading
-      // the picked URI to a cache location and copy from there. This can help
-      // with some content:// or special URIs on Android.
       try {
         // @ts-ignore - may not exist on some older SDKs
         if (typeof FileSystem.downloadAsync === "function") {
@@ -217,7 +241,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
             const dl = await FileSystem.downloadAsync(localUri, tmpPath);
             if (dl && dl.uri) {
               const saved3 = await copyFileToAppDir(dl.uri);
-              const newEntry = { uri: saved3.uri, name: saved3.name };
+              const newEntry = { uri: saved3.uri, name: saved3.name, size: saved3.size };
               setImages((p) => [...p, newEntry]);
               setFiles((p) => [...p, newEntry]);
               setLastCopyError(null);
@@ -319,50 +343,75 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
     return `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
   }
 
-  function validate() {
-    if (!fullName.trim()) {
-      Alert.alert("Validation", "Full name is required");
-      return false;
-    }
-    if (!email.trim() && !phone.trim()) {
-      Alert.alert("Validation", "Provide an email or phone");
-      return false;
-    }
-    if (!details.trim()) {
-      Alert.alert("Validation", "Please describe the incident");
-      return false;
-    }
-    return true;
+function validate() {
+  if (!fullName.trim()) {
+    Alert.alert("Validation", "Full name is required");
+    return false;
   }
-
-  async function sendWhatsAppText() {
-    if (!validate()) return;
-    try {
-      const mapLink = formatMapLink();
-      const message = [
-        `YCKF Cybercrime Report — ${crimeType || "General"}`,
-        `Name: ${fullName}`,
-        `Phone: ${phone}`,
-        `City: ${city}`,
-        `Date: ${date}`,
-        "",
-        `${details}`,
-        "",
-        mapLink || "",
-      ].join("\n");
-
-      const whatsappURL = `whatsapp://send?text=${encodeURIComponent(message)}`;
-      const supported = await Linking.canOpenURL(whatsappURL);
-      if (supported) {
-        await Linking.openURL(whatsappURL);
-        return;
-      }
-      await Share.share({ message });
-    } catch (err) {
-      console.warn("sendWhatsAppText", err);
-      Alert.alert("Error", "Unable to open WhatsApp or share.");
-    }
+  if (!email.trim() && !phone.trim()) {
+    Alert.alert("Validation", "Provide an email or phone");
+    return false;
   }
+  if (!city.trim()) {
+    Alert.alert("Validation", "City / Location is required");
+    return false;
+  }
+  if (!date.trim()) {
+    Alert.alert("Validation", "Date of incident is required");
+    return false;
+  }
+  if (!crimeType.trim()) {
+    Alert.alert("Validation", "Please select type of crime");
+    return false;
+  }
+  if (!details.trim()) {
+    Alert.alert("Validation", "Please describe the incident");
+    return false;
+  }
+  return true;
+}
+
+
+async function sendWhatsAppText() {
+  if (!validate()) return;
+
+  const mapLink = formatMapLink();
+  const message = [
+    `YCKF Cybercrime Report — ${crimeType || "General"}`,
+    `Name: ${fullName}`,
+    `Phone: ${phone}`,
+    `City: ${city}`,
+    `Date: ${date}`,
+    "",
+    details,
+    "",
+    mapLink || "",
+  ].join("\n");
+
+  const messageEncoded = encodeURIComponent(message);
+
+  // Use the same style as Contact form: fixed number, wa.me link
+  const whatsappURL = `https://wa.me/265887754979?text=${messageEncoded}`;
+
+  try {
+    const supported = await Linking.canOpenURL(whatsappURL);
+
+    if (supported) {
+      await Linking.openURL(whatsappURL);
+      return;
+    } else {
+      Alert.alert("Error", "WhatsApp is not installed.");
+      return;
+    }
+  } catch (err) {
+    console.warn("WhatsApp error:", err);
+    Alert.alert("Error", "Unable to open WhatsApp.");
+    return;
+  }
+}
+
+
+
 
   async function shareAttachments() {
     if (images.length === 0) {
@@ -395,8 +444,13 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
         crimeType,
         dateSaved: new Date().toISOString(),
         details,
-        files: images.map((i) => ({ uri: i.uri, name: i.name })),
+        files: [...images, ...files].map(f => ({ uri: f.uri, name: f.name || "untitled", size: f.size })),
         status: "draft",
+        fullName: "",
+        email: "",
+        phone: "",
+        city: "",
+        date: ""
       };
       if (typeof storeSaveDraft === "function") {
         await storeSaveDraft(draft as any);
@@ -416,46 +470,52 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
     await pickImage();
   }
 
-  async function sendEmail() {
-    if (!validate()) return;
-    try {
-      const mapLink = formatMapLink();
-      const subject = `YCKF Cybercrime Report — ${crimeType || "General"}`;
-      const body = [
-        `Name: ${fullName}`,
-        `Phone: ${phone}`,
-        `Email: ${email}`,
-        `City: ${city}`,
-        `Date: ${date}`,
-        "",
-        details || "",
-        "",
-        mapLink || "",
-      ].join("\n");
+async function sendEmail() {
+  if (!validate()) return;
 
-      const attachments = [...images, ...files]
-        .map((f) => f.uri)
-        .filter(Boolean);
+  try {
+    const ADMIN_EMAIL = "rosemarychinoko@gmail.com"; // ✅ FIXED DESTINATION
 
-      const can = await MailComposer.isAvailableAsync();
-      if (can) {
-        await MailComposer.composeAsync({
-          recipients: email ? [email] : [],
-          subject,
-          body,
-          attachments,
-        });
-      } else {
-        Alert.alert(
-          "Mail not available",
-          "Your device cannot send email from this app."
-        );
-      }
-    } catch (err) {
-      console.warn("sendEmail", err);
-      Alert.alert("Email error", "Unable to compose email.");
+    const mapLink = formatMapLink();
+    const subject = `YCKF Cybercrime Report — ${crimeType || "General"}`;
+
+    const body = [
+      `Name: ${fullName}`,
+      `Phone: ${phone}`,
+      `Email: ${email}`, // user's email stays in the BODY only
+      `City: ${city}`,
+      `Date: ${date}`,
+      "",
+      details || "",
+      "",
+      mapLink || "",
+    ].join("\n");
+
+    const attachments = [...images, ...files]
+      .map((f) => f.uri)
+      .filter(Boolean);
+
+    const can = await MailComposer.isAvailableAsync();
+
+    if (can) {
+      await MailComposer.composeAsync({
+        recipients: [ADMIN_EMAIL], // ✅ ALWAYS SEND TO ADMIN
+        subject,
+        body,
+        attachments,
+      });
+    } else {
+      Alert.alert(
+        "Mail not available",
+        "Your device cannot send email from this app."
+      );
     }
+  } catch (err) {
+    console.warn("sendEmail", err);
+    Alert.alert("Email error", "Unable to compose email.");
   }
+}
+
 
   async function validateAndSubmit(method: "email" | "whatsapp") {
     if (!validate()) return;
@@ -491,7 +551,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
             <Text style={styles.bullet}>1</Text> Personal Information
           </Text>
 
-          <Text style={styles.label}>Full Name</Text>
+          <Text style={styles.label}>Full Name *</Text>
           <TextInput
             value={fullName}
             onChangeText={setFullName}
@@ -499,7 +559,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
             style={styles.input}
           />
 
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>Email *</Text>
           <TextInput
             value={email}
             onChangeText={setEmail}
@@ -508,7 +568,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
             keyboardType="email-address"
           />
 
-          <Text style={styles.label}>Phone number</Text>
+          <Text style={styles.label}>Phone number *</Text>
           <TextInput
             value={phone}
             onChangeText={setPhone}
@@ -517,7 +577,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
             keyboardType="phone-pad"
           />
 
-          <Text style={styles.label}>City / Location</Text>
+          <Text style={styles.label}>City / Location *</Text>
           <TextInput
             value={city}
             onChangeText={setCity}
@@ -532,21 +592,51 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
           </Text>
 
           <Text style={styles.label}>Date of incident</Text>
-          <TextInput
-            value={date}
-            onChangeText={setDate}
-            placeholder="dd/mm/yyyy"
-            style={styles.input}
+           <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+              <TextInput
+                 style={styles.input}
+                 placeholder="Tap to pick a date"
+                 value={date}
+                 editable={false}
+              />
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+               value={new Date()}
+               mode="date"
+               display="default"
+               maximumDate={new Date()}
+               onChange={(event, selectedDate) => {
+                 setShowDatePicker(false);
+                 if (selectedDate) setDate(selectedDate.toDateString());
+            }}
           />
+        )}
+
+
 
           <Text style={styles.label}>Type of crime</Text>
-
-          <TextInput
-            value={crimeType}
-            onChangeText={setCrimeType}
-            placeholder="Select crime type"
-            style={styles.input}
-          />
+          <View style={styles.pickerContainer}>
+            <Picker selectedValue={crimeType} onValueChange={(itemValue : any) => setCrimeType(itemValue)}>
+              <Picker.Item label="Select crime type..." value=""/>
+              <Picker.Item label="Online Scam / Fraud " value="online_scam"/>
+              <Picker.Item label="Phishing" value="phishing"/>
+              <Picker.Item label="Identity Theft" value="identity_theft"/>
+              <Picker.Item label="Impersonation/ Fake Accounts" value="impersonation"/>
+              <Picker.Item label="Cyberbullying/ Harassment" value="harassment"/>
+              <Picker.Item label="Blackmail/ Extortion" value="extortion"/>
+              <Picker.Item label="Hacked Social Media Account" value="hacked_social"/>
+              <Picker.Item label="Hacked Email Account" value="hacked_email"/>
+              <Picker.Item label="Unauthorized Mobile Money Transactions" value="mobile_money"/>
+              <Picker.Item label="Malware / Ransomware" value="malware"/>
+              <Picker.Item label="Non-consensual Image Sharing" value="revenge_porn"/>
+              <Picker.Item label="Romance / Investment Scam" value="romance_scam"/>
+              <Picker.Item label="Online Child Exploitation" value="child_exploitation"/>
+              <Picker.Item label="Data Privacy Violation" value="privacy_violation"/>
+              <Picker.Item label="Other(Please Specify)" value="other"/>
+            </Picker>
+          </View>
 
           <Text style={styles.label}>Details</Text>
           <TextInput
@@ -627,31 +717,7 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
           </TouchableOpacity>
         </View>
 
-        {/* Dev-only debug toggle and panel */}
-        {__DEV__ ? (
-          <>
-            <TouchableOpacity
-              style={styles.debugButton}
-              onPress={() => setDebugVisible((v) => !v)}
-            >
-              <Text style={styles.debugButtonText}>
-                {debugVisible ? "Hide debug" : "Show debug"}
-              </Text>
-            </TouchableOpacity>
-            {debugVisible ? (
-              <View style={styles.debugPanel}>
-                <Text style={styles.debugTitle}>Last Picker Response</Text>
-                <Text style={styles.debugText}>
-                  {lastPickerResponse
-                    ? JSON.stringify(lastPickerResponse, null, 2).slice(0, 3000)
-                    : "—"}
-                </Text>
-                <Text style={styles.debugTitle}>Last Copy Error</Text>
-                <Text style={styles.debugText}>{lastCopyError ?? "—"}</Text>
-              </View>
-            ) : null}
-          </>
-        ) : null}
+        
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -804,32 +870,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
   },
-  debugButton: {
-    backgroundColor: "#092F4F",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    alignSelf: "flex-start",
-    marginTop: 12,
-  },
-  debugButtonText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-  debugPanel: {
-    backgroundColor: "#111827",
-    padding: 12,
-    borderRadius: 6,
-    marginTop: 10,
-  },
-  debugTitle: {
-    color: "#C9D6DF",
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-  debugText: {
-    color: "#E6EEF6",
-    fontSize: 12,
-    marginBottom: 8,
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginTop: 8,
+    marginBottom: 16,
   },
 });

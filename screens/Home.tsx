@@ -1,16 +1,7 @@
 // screens/Home.tsx
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  Linking,
-  Platform,
-} from "react-native";
+import {View, Text, Image, StyleSheet, TouchableOpacity, FlatList, Linking, Platform,} from "react-native";
 import { MaterialCommunityIcons as Icon } from "@expo/vector-icons";
 import { shareCurrentLocationViaWhatsApp, instructShareLiveLocation, } from "../app/utils/location";
 

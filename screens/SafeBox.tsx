@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import NetInfo from '@react-native-community/netinfo';
 import { useFocusEffect } from '@react-navigation/native';
 
-export default function SafeBox({ navigation }: { navigation: any }) {
+export default function SafeBox({ navigation }:  any ) {
   const [drafts, setDrafts] = useState<DraftReport[]>([]);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
 
@@ -83,6 +83,8 @@ export default function SafeBox({ navigation }: { navigation: any }) {
         >
           <Text style={styles.submitText}>Submit</Text>
         </TouchableOpacity>
+
+  
 
         <TouchableOpacity
           onPress={() => handleDelete(item.id)}
