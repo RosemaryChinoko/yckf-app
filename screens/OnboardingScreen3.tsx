@@ -1,10 +1,21 @@
 import React from "react";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import OnboardingTemplate from "../components/OnboardingTemplate";
 
-type Props =  NativeStackScreenProps<any, "OnboardingScreen3">;
+type Props = NativeStackScreenProps<any, "Onboarding3">;
 
-export default function OnboardingScreen3({ navigation }: any) {
+export default function OnboardingScreen3({ navigation }: Props) {
+
+  const finishOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem("hasSeenOnboarding", "true");
+      navigation.replace("Tabs"); // take user into the app permanently
+    } catch (error) {
+      console.log("Error saving onboarding state:", error);
+    }
+  };
+
   return (
     <OnboardingTemplate
       title="Track Cases Securely"
@@ -12,7 +23,7 @@ export default function OnboardingScreen3({ navigation }: any) {
       buttonText="Get Started"
       showBack={true}
       onBack={() => navigation.goBack()}
-      onNext={() => navigation.replace("Tabs")}
+      onNext={finishOnboarding} 
     />
   );
 }
