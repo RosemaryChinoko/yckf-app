@@ -9,7 +9,7 @@ import * as MailComposer from "expo-mail-composer";
 import * as Linking from "expo-linking";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from "@react-native-picker/picker";
-import {saveDraft as storeSaveDraft, DraftReport, copyFileToAppDir} from "../app/stores/safeboxStore";
+import {saveDraft as storeSaveDraft, DraftReport, copyFileToAppDir, getAllDrafts, deleteDraft} from "../app/stores/safeboxStore";
 import { ensureLocationPermission } from "../app/utils/location";
 
 
@@ -30,7 +30,7 @@ export async function ensureMediaPermission() {
 
 type Props = { readonly navigation?: any };
 
-export default function ReportForm({ navigation }: Readonly<Props>) {
+export default function ReportForm({ route, navigation }: any) {
   // Form state
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -49,6 +49,11 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [draftId, setDraftId] = useState<string>(() => {
+    return route.params?.draftId || `draft-${Date.now()}`;
+  });
+
+  
   const REPORT_WHATSAPP = "https://wa.me/265887754979";
   
 
@@ -82,17 +87,44 @@ export default function ReportForm({ navigation }: Readonly<Props>) {
   }, []);
 
   // --- Auto-save draft effect ---
+
+
+
 useEffect(() => {
   const autoSave = setTimeout(() => {
-    // only saves if some data exists
+    // Only save if some data exists
     if (!fullName && !details && images.length === 0 && files.length === 0) return;
 
-    const draftId = `draft-${Date.now()}`;
     saveDraftToSafeBox(draftId);
   }, 3000); // auto-save after 3 seconds of inactivity
 
   return () => clearTimeout(autoSave);
 }, [fullName, email, phone, city, crimeType, details, date, images, files]);
+
+ useEffect(() => {
+  if (!route.params?.draftId) return;
+
+  const loadDraft = async () => {
+    const drafts = await getAllDrafts();
+    const draft = drafts.find(d => d.id === route.params.draftId);
+    if (draft) {
+      setDraftId(draft.id);
+      setFullName(draft.fullName || "");
+      setEmail(draft.email || "");
+      setPhone(draft.phone || "");
+      setCity(draft.city || "");
+      setCrimeType(draft.crimeType || "");
+      setDetails(draft.details || "");
+      setDate(draft.date || new Date().toDateString());
+      setImages(draft.files || []);
+      setFiles(draft.files || []);
+    }
+  };
+
+  loadDraft();
+}, [route.params?.draftId]);
+
+    
 
 // --- Helper function inside the component ---
 async function saveDraftToSafeBox(id: string) {
@@ -103,13 +135,17 @@ async function saveDraftToSafeBox(id: string) {
       crimeType,
       dateSaved: new Date().toISOString(),
       details,
-      files: [...images, ...files].map(f => ({ uri: f.uri, name: f.name || "untitled", size: f.size })),
+      files: [...images, ...files].map(f => ({
+        uri: f.uri,
+        name: f.name || "untitled",
+        size: f.size,
+      })),
       status: "draft",
-      email: "",
-      phone: "",
-      city: "",
-      date: "",
-      fullName: ""
+      fullName,
+      email,
+      phone,
+      city,
+      date,
     };
 
     await storeSaveDraft(draft);
@@ -118,7 +154,6 @@ async function saveDraftToSafeBox(id: string) {
     console.warn("Auto-save failed", err);
   }
 }
-
 
   // helper: ensure location is populated (if possible)
   async function ensureLocation() {
@@ -437,33 +472,28 @@ async function sendWhatsAppText() {
   }
 
   async function saveDraft() {
-    try {
-      const draft: DraftReport = {
-        id: Date.now().toString(),
-        title: `${crimeType || "Report"} — ${fullName || "anonymous"}`,
-        crimeType,
-        dateSaved: new Date().toISOString(),
-        details,
-        files: [...images, ...files].map(f => ({ uri: f.uri, name: f.name || "untitled", size: f.size })),
-        status: "draft",
-        fullName: "",
-        email: "",
-        phone: "",
-        city: "",
-        date: ""
-      };
-      if (typeof storeSaveDraft === "function") {
-        await storeSaveDraft(draft as any);
-        Alert.alert("Saved", "Draft saved to SafeBox.");
-      } else {
-        // submitReport moved to module outer scope (see exported submitReport above)
-        Alert.alert("Unable to save", "SafeBox save function not available.");
-      }
-    } catch (err) {
-      console.warn("saveDraft error", err);
-      Alert.alert("Save error", "Unable to save draft.");
-    }
+  try {
+    const draft: DraftReport = {
+      id: draftId,
+      title: `${crimeType || "Report"} — ${fullName || "anonymous"}`,
+      crimeType,
+      dateSaved: new Date().toISOString(),
+      details,
+      files: [...images, ...files].map(f => ({ uri: f.uri, name: f.name || "untitled", size: f.size })),
+      status: "draft",
+      fullName,
+      email,
+      phone,
+      city,
+      date
+    };
+    await storeSaveDraft(draft);
+    Alert.alert("Saved", "Draft saved to SafeBox.");
+  } catch (err) {
+    console.warn("saveDraft error", err);
+    Alert.alert("Save error", "Unable to save draft.");
   }
+}
 
   async function chooseFiles() {
     // simple chooser: currently reuse image picker as a fallback for selecting files
@@ -518,13 +548,40 @@ async function sendEmail() {
 
 
   async function validateAndSubmit(method: "email" | "whatsapp") {
-    if (!validate()) return;
-    if (method === "email") {
-      await sendEmail();
-    } else {
-      await sendWhatsAppText();
+  if (!validate()) return;
+
+  // 1. Submit the report first
+  if (method === "email") {
+    await sendEmail();
+  } else {
+    await sendWhatsAppText();
+  }
+
+  // 2. Delete the draft from SafeBox if it exists
+  if (draftId) {
+    try {
+      await deleteDraft(draftId);
+    } catch (err) {
+      console.warn("Error deleting draft:", err);
     }
   }
+
+  // 3. Clear all form fields after successful submission
+  setFullName("");
+  setEmail("");
+  setPhone("");
+  setCity("");
+  setCrimeType("");
+  setDetails("");
+  setDate(new Date().toDateString());
+  setImages([]);
+  setFiles([]);
+
+  // 4. Remove draftId so the form does not reload old draft
+  navigation.setParams({ draftId: undefined });
+
+  Alert.alert("Success", "Your report has been submitted.");
+}
 
   return (
     <SafeAreaView style={styles.safe}>

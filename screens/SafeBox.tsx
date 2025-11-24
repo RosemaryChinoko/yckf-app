@@ -40,19 +40,6 @@ export default function SafeBox({ navigation }:  any ) {
     ]);
   };
 
-  const handleSubmit = async (id: string) => {
-    if (!isOnline) {
-      await enqueueReport(id);
-      Alert.alert(
-        'Queued',
-        'Device is offline — report queued and will submit when online.'
-      );
-      loadDrafts();
-      return;
-    }
-
-    navigation.navigate('SafeBoxDetail', { id });
-  };
 
   const renderItem = ({ item }: { item: DraftReport }) => (
     <View style={styles.card}>
@@ -68,23 +55,16 @@ export default function SafeBox({ navigation }:  any ) {
       </View>
 
       <View style={{ width: 120, alignItems: 'flex-end' }}>
+
         <TouchableOpacity
           style={styles.viewBtn}
           onPress={() =>
-            navigation.navigate('SafeBoxDetail', { id: item.id })
+            navigation.navigate('Report', { draftId: item.id })
           }
         >
-          <Text style={styles.viewText}>View Details</Text>
+          <Text style={styles.viewText}>Continue</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.submitBtn}
-          onPress={() => handleSubmit(item.id)}
-        >
-          <Text style={styles.submitText}>Submit</Text>
-        </TouchableOpacity>
-
-  
 
         <TouchableOpacity
           onPress={() => handleDelete(item.id)}
