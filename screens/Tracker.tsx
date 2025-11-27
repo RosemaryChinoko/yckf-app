@@ -15,7 +15,7 @@ const MOCK_DB: Record<string, CaseRecord> = {
     crimeType: 'Online Fraud',
     dateReported: '2025-09-20',
     lastUpdate: '2025-09-30',
-    assignedOfficer: 'officer Rosemary',
+    assignedOfficer: 'officer yckfadmin',
     details: 'Reported by user: transaction was unauthorized and funds transferred.',
     updates: [
       {id: 'u1', date: '2025-09-30', text: 'Case under investigation. Suspect identified'},

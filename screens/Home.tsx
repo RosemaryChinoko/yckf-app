@@ -95,7 +95,7 @@ function HomeListHeader(_: Readonly<{}>) {
 
       <View style={styles.welcomeCard}>
         <Image
-          source={require("../assets/yckf-logo.png")}
+          source={require("../assets/yckf-logo3.png")}
           style={styles.logo}
         />
         <View style={{ flex: 1, marginLeft: 12 }}>
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: 40,
-    height: 40,
+    height: 50,
     resizeMode: "contain",
   },
   welcomeTitle: {

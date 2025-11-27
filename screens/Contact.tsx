@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {View, Text, StyleSheet, TouchableOpacity, TextInput, Linking, Alert,ScrollView } from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, TextInput, Linking, Alert,ScrollView, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ScreenContainer } from 'react-native-screens';
+
+
 
 export default function Contact({ navigation }: any) {
   const [fullName, setFullName] = useState('');
@@ -9,7 +13,7 @@ export default function Contact({ navigation }: any) {
   const [message, setMessage] = useState('');
 
   const phoneNumber = '+233505313578';
-  const emailAddress = 'yckfadmin@yck.org';
+  const emailAddress = 'yckfadmin@youngcyberknightsfoundation.org';
   const whatsappLink = `https://wa.me/233505313578`;
 
   const handleCall = async () => {
@@ -60,7 +64,7 @@ export default function Contact({ navigation }: any) {
         {/* Quick cards */}
         <View style={styles.card}>
           <TouchableOpacity style={styles.contactRow} onPress={handleCall}>
-            <View style={styles.iconCircle}><Icon name="phone" size={20} color="#092F4F" /></View>
+            <View style={styles.iconCircle}><Icon name="phone" size={20} color="#ec1212ff" /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rowTitle}>Call us</Text>
               <Text style={styles.rowSub}>{phoneNumber}</Text>
@@ -68,7 +72,7 @@ export default function Contact({ navigation }: any) {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.contactRow} onPress={handleEmail}>
-            <View style={styles.iconCircle}><Icon name="email-outline" size={20} color="#092F4F" /></View>
+            <View style={styles.iconCircle}><Icon name="email-outline" size={20} color="#119cecff" /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rowTitle}>Email us</Text>
               <Text style={styles.rowSub}>{emailAddress}</Text>
@@ -76,7 +80,7 @@ export default function Contact({ navigation }: any) {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.contactRow} onPress={handleWhatsApp}>
-            <View style={styles.iconCircle}><Icon name="whatsapp" size={20} color="#092F4F" /></View>
+            <View style={styles.iconCircle}><Icon name="whatsapp" size={20} color="#1ff863ff" /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rowTitle}>WhatsApp</Text>
               <Text style={styles.rowSub}>Chat with us</Text>
@@ -106,6 +110,44 @@ export default function Contact({ navigation }: any) {
             <Text style={styles.sendText}>Send via WhatsApp</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Founder Section */}
+<View style={styles.founderCardBox}>
+  <Text style={styles.founderTitle}>Meet Our Founder</Text>
+
+  <View style={styles.founderInner}>
+    <Image source={require("../assets/Founder.jpeg")} style={styles.founderImage}/>
+
+    <Text style={styles.founderName}>Bright Peter Kwaku Boateng</Text>
+    <Text style={styles.founderRole}>Founder & CEO, YCKF</Text>
+
+    <Text style={styles.founderBio}>
+      Leading the fight against cybercrime in Ghana and empowering 
+      communities with cybersecurity knowledge and protection.
+    </Text>
+  </View>
+</View>
+
+{/* Official Links Section */}
+<View style={styles.screenContainer}>
+  <LinearGradient colors={['#413c87ff', '#875fe6ff']}
+    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+    style={styles.linksCardBox}> 
+  <Text style={styles.linksTitle}>Official Links</Text>
+
+  <TouchableOpacity style={styles.linkRow} onPress={() => Linking.openURL("https://www.youngcyberknightsfoundation.org")}>
+    <Icon name="web" size={22} color="#fff" style={{ marginRight: 12, marginTop: 0 }} />
+    <Text style={styles.linkLabel}>Official Website</Text>
+    <Text style={styles.linkValue}>www.youngcyberknightsfoundation.org</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity style={styles.linkRow} onPress={() => Linking.openURL("mailto:brightpeterkwathuboateng@gmail.com")}>
+    <Icon name="email-outline" size={22} color="#fff" style={{ marginRight: 12 }} />
+    <Text style={styles.linkLabel}>Official Email</Text>
+    <Text style={styles.linkValue}>brightpeterkwathuboateng@gmail.com</Text>
+  </TouchableOpacity>
+  </LinearGradient>
+</View>
 
         <View style={{ height: 60 }} />
       </ScrollView>
@@ -230,4 +272,110 @@ const styles = StyleSheet.create({
     color: '#fff', 
     fontWeight: '700'
    },
+
+   screenContainer:{
+    flex: 1,
+    backgroundColor: "#f1f1f1",
+   },
+   founderCardBox: {
+  backgroundColor: "#fff",
+  borderRadius: 14,
+  padding: 16,
+  marginBottom: 18,
+  elevation: 3,
+},
+
+founderTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+  color: "#0F172A",
+  marginBottom: 10,
+},
+
+founderInner: {
+  alignItems: "center",
+  paddingHorizontal: 12,
+},
+
+
+founderName: {
+  fontSize: 17,
+  fontWeight: "700",
+  color: "#0F172A",
+  marginTop: 6,
+  textAlign: "center",
+},
+
+founderRole: {
+  fontSize: 14,
+  color: "#6B7280",
+  marginTop: 2,
+  textAlign: "center",
+},
+
+founderBio: {
+  textAlign: "center",
+  color: "#4A4A4A",
+  marginTop: 25,
+  fontSize: 13,
+  lineHeight: 18,
+},
+
+
+/* Official Links Box */
+linksCardBox: {
+  borderRadius: 14,
+  paddingTop: 16,
+  paddingBottom: 8,
+  elevation: 5,
+  overflow: "hidden",
+},
+
+linksTitle: {
+  color: "#fff",
+  fontSize: 18,
+  fontWeight: "700",
+  marginBottom: 12,
+  paddingHorizontal: 16,
+},
+linkTextWrapper: {
+  flex: 1,
+},
+
+linkRow: {
+  flexDirection: "row",
+  alignItems: "flex-start",
+  flexWrap: "wrap",
+  marginBottom: 8,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  backgroundColor: "rgba(0, 0, 0, 0.25)",
+  borderRadius: 10,
+  marginHorizontal: 12,
+},
+
+linkLabel: {
+  color: "#fff",
+  fontSize: 15,
+  fontWeight: "600",
+},
+
+linkValue: {
+  color: "#fff",
+  marginTop: 2,
+  width: '100%',
+  paddingLeft: 34,
+  marginLeft: -34,
+  fontSize: 13,
+  opacity: 0.8,
+},
+founderImage:{
+  width: 120,
+  height: 120,
+  borderRadius: 100,
+  resizeMode: "cover",
+  marginBottom: 14,
+  borderWidth: 2,
+  borderColor: "#b5b5b5",
+}
 });

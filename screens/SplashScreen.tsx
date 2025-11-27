@@ -21,7 +21,7 @@ export default function SplashScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <Image source={require("../assets/yckf-logo.png")} style={styles.logo} />
+      <Image source={require("../assets/yckf-logo3.png")} style={styles.logo} />
       <ActivityIndicator style={{ marginTop: 20 }} size="large" color="#092F4F" />
     </View>
   );

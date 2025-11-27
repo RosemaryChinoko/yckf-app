@@ -54,7 +54,7 @@ export default function ReportForm({ route, navigation }: any) {
   });
 
   
-  const REPORT_WHATSAPP = "https://wa.me/265887754979";
+  const REPORT_WHATSAPP = "https://wa.me/233505313578";
   
 
 
@@ -425,8 +425,8 @@ async function sendWhatsAppText() {
 
   const messageEncoded = encodeURIComponent(message);
 
-  // Use the same style as Contact form: fixed number, wa.me link
-  const whatsappURL = `https://wa.me/265887754979?text=${messageEncoded}`;
+  
+  const whatsappURL = `https://wa.me/233505313578?text=${messageEncoded}`;
 
   try {
     const supported = await Linking.canOpenURL(whatsappURL);
@@ -504,7 +504,7 @@ async function sendEmail() {
   if (!validate()) return;
 
   try {
-    const ADMIN_EMAIL = "rosemarychinoko@gmail.com"; // ✅ FIXED DESTINATION
+    const ADMIN_EMAIL = "yckfadmin@youngcyberknightsfoundation.org"; // ✅ FIXED DESTINATION
 
     const mapLink = formatMapLink();
     const subject = `YCKF Cybercrime Report — ${crimeType || "General"}`;
