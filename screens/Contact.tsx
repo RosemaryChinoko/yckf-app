@@ -130,7 +130,7 @@ export default function Contact({ navigation }: any) {
 
 {/* Official Links Section */}
 <View style={styles.screenContainer}>
-  <LinearGradient colors={['#413c87ff', '#875fe6ff']}
+  <LinearGradient colors={['#04002edd', '#022d2eff']}
     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
     style={styles.linksCardBox}> 
   <Text style={styles.linksTitle}>Official Links</Text>
@@ -144,7 +144,13 @@ export default function Contact({ navigation }: any) {
   <TouchableOpacity style={styles.linkRow} onPress={() => Linking.openURL("mailto:brightpeterkwathuboateng@gmail.com")}>
     <Icon name="email-outline" size={22} color="#fff" style={{ marginRight: 12 }} />
     <Text style={styles.linkLabel}>Official Email</Text>
-    <Text style={styles.linkValue}>brightpeterkwathuboateng@gmail.com</Text>
+    <Text style={styles.linkValue}>brightpeterkwakuboateng@gmail.com</Text>
+  </TouchableOpacity>
+
+   <TouchableOpacity style={styles.linkRow} onPress={() => Linking.openURL("https://www.linkedin.com/company/young-cyber-knights-foundation/")}>
+    <Icon name="linkedin" size={22} color="#fff" style={{ marginRight: 12 }} />
+    <Text style={styles.linkLabel}>LinkedIn</Text>
+    <Text style={styles.linkValue}>https://www.linkedin.com/company/young-cyber-knights-foundation/</Text>
   </TouchableOpacity>
   </LinearGradient>
 </View>
